@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perspectiva em 4 quadrantes | Crescimentum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --accent-dark: #001B71;
+      --accent: #007BEA;
+      --accent-light: #B3DFFF;
+      --text: #210000;
+      --text-light: #666666;
+      --border: #e0e0e0;
+      --bg: #ffffff;
+      --bg-soft: #ebf5ff;
+      --field-bg: #f5f5f5;
+      --space-xs: 8px;
+      --space-sm: 16px;
+      --space-md: 24px;
+      --space-lg: 36px;
+      --space-xl: 48px;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Aptos', 'Segoe UI', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: var(--space-md) var(--space-md) var(--space-xl);
+    }
+
+    /* Cabeçalho */
+    .top {
+      background: var(--accent-dark);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: var(--space-md);
+    }
+    .top img { height: 26px; display: block; }
+    .top .sep { width: 2px; height: 28px; background: rgba(255,255,255,0.2); }
+    .top h1 {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    /* Grid dos quadrantes */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-sm);
+      align-items: stretch;
+    }
+
+    .quad {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .quad-head {
+      background: var(--accent-dark);
+      padding: 14px 20px;
+    }
+    .tag {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+    }
+    .quad-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      gap: var(--space-sm);
+    }
+    .question {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .question small {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    textarea {
+      width: 100%;
+      flex-grow: 1;
+      min-height: 220px;
+      resize: vertical;
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-sm);
+      background: var(--field-bg);
+      padding: 12px 14px;
+      font-family: 'Aptos', 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #ffffff;
+    }
+    textarea::placeholder { color: #b0b0b0; }
+
+    /* Quadrante 4: só aparece depois dos três primeiros */
+    #quad4 { display: none; }
+    #quad4.revealed {
+      display: flex;
+      animation: reveal 0.7s ease both;
+    }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Barra de download */
+    .actions {
+      display: none;
+      justify-content: flex-end;
+      margin-top: var(--space-md);
+    }
+    .actions.visible {
+      display: flex;
+      animation: reveal 0.7s ease both;
+    }
+    .btn {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: #ffffff;
+      background: var(--accent-dark);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 28px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--accent); }
+    .btn:disabled { opacity: 0.6; cursor: wait; }
+    .btn:focus-visible { outline: 3px solid var(--accent-light); outline-offset: 2px; }
+
+    /* Overlay do PDF */
+    .pdf-loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(255,255,255,0.95);
+      z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: 'Raleway', sans-serif; color: #001B71;
+    }
+    .pdf-spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #f4f8fe;
+      border-top: 4px solid #007BEA;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: var(--space-sm) var(--space-sm) var(--space-xl); }
+      .grid { grid-template-columns: minmax(0, 1fr); }
+      .top { padding: 14px 16px; }
+      .top h1 { font-size: 15px; }
+      textarea { min-height: 170px; }
+      .actions { justify-content: stretch; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="top">
+      <img src="https://i.imgur.com/fUPVKmL.png" crossorigin="anonymous" alt="Crescimentum">
+      <div class="sep"></div>
+      <h1>Perspectiva em 4 quadrantes</h1>
+    </div>
+
+    <div class="grid">
+      <section class="quad" id="quad1">
+        <div class="quad-head"><p class="tag">Quadrante 1</p></div>
+        <div class="quad-body">
+          <label class="question" for="q1">Pense em uma situação que está te incomodando e que envolva outra pessoa</label>
+          <textarea id="q1" placeholder="Escreva aqui"></textarea>
+        </div>
+      </section>
+
+      <section class="quad" id="quad2">
+        <div class="quad-head"><p class="tag">Quadrante 2</p></div>
+        <div class="quad-body">
+          <label class="question" for="q2">Descreva os comportamentos desta pessoa que te incomodam</label>
+          <textarea id="q2" placeholder="Escreva aqui"></textarea>
+        </div>
+      </section>
+
+      <section class="quad" id="quad3">
+        <div class="quad-head"><p class="tag">Quadrante 3</p></div>
+        <div class="quad-body">
+          <label class="question" for="q3">Descreva quais são os comportamentos que você tem com essa pessoa diante dessa situação</label>
+          <textarea id="q3" placeholder="Escreva aqui"></textarea>
+        </div>
+      </section>
+
+      <section class="quad" id="quad4" aria-live="polite">
+        <div class="quad-head"><p class="tag">Quadrante 4</p></div>
+        <div class="quad-body">
+          <label class="question" for="q4"><small>Pessoa neutra</small>O que você pensaria de uma pessoa que age desta maneira?</label>
+          <textarea id="q4" placeholder="Escreva aqui"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <div class="actions" id="actions">
+      <button class="btn" id="btnDownload" type="button" onclick="generatePDF()">Baixar minhas respostas</button>
+    </div>
+
+  </div>
+
+  <script>
+    const IDS = ['q1', 'q2', 'q3', 'q4'];
+    const filled = (id) => document.getElementById(id).value.trim().length > 0;
+    let revealed = false;
+
+    function update() {
+      // O quadrante 4 entra quando os três primeiros têm resposta e não some mais depois
+      if (!revealed && ['q1', 'q2', 'q3'].every(filled)) {
+        revealed = true;
+        const q4 = document.getElementById('quad4');
+        q4.classList.add('revealed');
+        setTimeout(() => {
+          q4.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+      }
+      // O botão de download aparece quando os quatro têm resposta
+      const all = revealed && IDS.every(filled);
+      document.getElementById('actions').classList.toggle('visible', all);
+    }
+
+    IDS.forEach((id) => document.getElementById(id).addEventListener('input', update));
+
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function generatePDF() {
+      const btn = document.getElementById('btnDownload');
+      btn.disabled = true;
+      btn.textContent = 'Gerando PDF...';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'pdf-loading-overlay';
+      overlay.innerHTML = '<div class="pdf-spinner"></div><h2>Preparando o documento...</h2>';
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        const getVal = (id) => {
+          const val = document.getElementById(id).value.trim();
+          if (!val) return '<div style="color: #b0b0b0; font-style: italic; font-size: 13px;">Não preenchido</div>';
+          return `<div style="color: #210000; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; word-wrap: break-word; overflow-wrap: break-word;">${esc(val)}</div>`;
+        };
+
+        const quadHTML = (tag, question, id, extra) => `
+          <div style="border: 1.5px solid #e0e0e0; border-radius: 12px; background: #ffffff; display: flex; flex-direction: column; height: 100%; min-width: 0; box-sizing: border-box; overflow: hidden;">
+            <div style="background: #001B71; padding: 14px 20px;">
+              <p style="font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B3DFFF;">${tag}</p>
+            </div>
+            <div style="padding: 20px; box-sizing: border-box; flex-grow: 1; min-width: 0;">
+              <p style="font-family: 'Raleway', sans-serif; font-weight: 700; font-size: 14px; color: #210000; line-height: 1.35; margin-bottom: 10px;">${extra ? '<span style="display:block; font-size:11px; font-weight:600; letter-spacing:0.04em; color:#007BEA; margin-bottom:2px;">' + extra + '</span>' : ''}${question}</p>
+              <div style="background: #f5f5f5; border-radius: 8px; padding: 10px 14px; min-height: 120px;">${getVal(id)}</div>
+            </div>
+          </div>
+        `;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'height: 0; overflow: hidden;';
+
+        const printContainer = document.createElement('div');
+        printContainer.style.cssText = 'width: 1000px; background: #ffffff; box-sizing: border-box;';
+
+        printContainer.innerHTML = `
+          <div style="padding: 28px; box-sizing: border-box; width: 1000px; display: flex; flex-direction: column;">
+            <div style="background:#001B71; padding:18px 24px; border-radius: 12px; margin-bottom:18px; display: flex; align-items: center; gap: 14px;">
+              <img src="https://i.imgur.com/fUPVKmL.png" crossorigin="anonymous" style="height:24px; display:block;">
+              <div style="width: 2px; height: 26px; background: rgba(255,255,255,0.2);"></div>
+              <div>
+                <div style="font-family:'Raleway',sans-serif; font-weight:800; font-size:16px; color:#fff; line-height:1.2;">Perspectiva em 4 quadrantes</div>
+                <div style="font-family:'Raleway',sans-serif; font-weight:500; font-size:11px; color:#B3DFFF;">Canva de reflexão</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; align-items: stretch; box-sizing: border-box;">
+              ${quadHTML('QUADRANTE 1', 'Pense em uma situação que está te incomodando e que envolva outra pessoa', 'q1', '')}
+              ${quadHTML('QUADRANTE 2', 'Descreva os comportamentos desta pessoa que te incomodam', 'q2', '')}
+              ${quadHTML('QUADRANTE 3', 'Descreva quais são os comportamentos que você tem com essa pessoa diante dessa situação', 'q3', '')}
+              ${quadHTML('QUADRANTE 4', 'O que você pensaria de uma pessoa que age desta maneira?', 'q4', 'PESSOA NEUTRA')}
+            </div>
+          </div>
+        `;
+
+        wrapper.appendChild(printContainer);
+        document.body.appendChild(wrapper);
+
+        const finalHeight = Math.max(printContainer.offsetHeight, printContainer.scrollHeight);
+
+        const opts = {
+          margin: 0,
+          filename: 'Perspectiva_em_4_quadrantes.pdf',
+          image: { type: 'jpeg', quality: 1.0 },
+          html2canvas: { scale: 2, useCORS: true, windowWidth: 1000, windowHeight: finalHeight, scrollY: 0, scrollX: 0 },
+          jsPDF: { unit: 'px', format: [1000, Math.max(700, finalHeight)], orientation: 'portrait' }
+        };
+
+        setTimeout(() => {
+          html2pdf().set(opts).from(printContainer).save().then(() => {
+            document.body.removeChild(wrapper);
+            document.body.removeChild(overlay);
+            btn.disabled = false;
+            btn.textContent = 'Baixar minhas respostas';
+          }).catch(err => {
+            console.error(err);
+            alert('Erro ao gerar o PDF.');
+            document.body.removeChild(wrapper);
+            document.body.removeChild(overlay);
+            btn.disabled = false;
+            btn.textContent = 'Baixar minhas respostas';
+          });
+        }, 500);
+      }, 100);
+    }
+  </script>
+</body>
+</html>
